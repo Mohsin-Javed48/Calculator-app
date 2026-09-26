@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 
 export default function Calculator() {
   const [expression, setExpression] = useState('');
   const [result, setResult] = useState<number | null>(null);
   const [error, setError] = useState('');
-  const [history, setHistory] = useState<{ expression: string; result: number }[]>([]);
+  const [history, setHistory] = useState<{ expression: string; result: number | string }[]>([]);
 
   const append = (char: string) => {
     setExpression((prev) => prev + char);
@@ -20,28 +20,41 @@ export default function Calculator() {
   const calculate = async () => {
     if (!expression) return;
 
-    const res = await fetch('/api/calculate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ expression }),
-    });
+    try {
+      const res = await fetch('/api/calculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expression }),
+      });
+      const data = await res.json();
 
-    const data = await res.json();
-
-    if (res.ok) {
-      setResult(data.result);
-      setHistory((prev) => [{ expression, result: data.result }, ...prev]);
-      setError('');
-    } else {
-      setError(data.error);
+      if (res.ok) {
+        setResult(data.result);
+        setHistory((prev) => [{ expression, result: data.result }, ...prev]);
+        setError('');
+      } else {
+        setError(data.error || 'Something went wrong');
+        setResult(null);
+      }
+    } catch {
+      setError('Could not reach the server');
       setResult(null);
     }
   };
 
   const loadHistory = async () => {
-    const res = await fetch('/api/calculate');
-    const data = await res.json();
-    setHistory(data.history || []);
+    try {
+      const res = await fetch('/api/calculate');
+      const data = await res.json();
+      if (res.ok) {
+        setHistory(data.history || []);
+        setError('');
+      } else {
+        setError(data.error || 'Could not load history');
+      }
+    } catch {
+      setError('Could not reach the server');
+    }
   };
 
   return (
@@ -90,7 +103,7 @@ export default function Calculator() {
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
+const styles: Record<string, CSSProperties> = {
   container: {
     background: 'white',
     borderRadius: 16,

@@ -6,6 +6,12 @@ const pool = new Pool({
   database: process.env.PGDATABASE || 'calculator',
   user: process.env.PGUSER || 'calculator_user',
   password: process.env.PGPASSWORD || 'calculator_pass',
+  connectionTimeoutMillis: 5000,
+});
+
+// Without this, an idle client losing its connection crashes the whole server.
+pool.on('error', (err) => {
+  console.error('Unexpected Postgres pool error:', err);
 });
 
 export async function query(text: string, params?: (string | number)[]) {

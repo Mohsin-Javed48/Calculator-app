@@ -1,5 +1,11 @@
 node_modules
 .next
 .git
-*.md
 .gitignore
+*.md
+Dockerfile
+.dockerignore
+docker-compose.yml
+config.bat
+.env*
+npm-debug.log*
